@@ -125,13 +125,13 @@ tutorial = True
 firstMistake = False
 firstMistakeSeen = True
 tutorialMessages = [
-  "Movement is performed with arrow keys or WASD keys. Press those to move cursor up, down, left and right.", # 0
+  "Welcome to the tutorial. Here you will learn to play this game. Movement is performed with arrow keys or WASD keys. Press them to move cursor up, down, left and right.", # 0
   "Numbers on the top and right sides of the field indicate which parts of the field should be filled, and which not.", # 1
   "For instance, this number 5 means that all 5 parts of the row should be filled, as the size of this level is 5x5.", # 2
   "To fill a space on the field press Space. If you see that the area should remain unfilled, put the cross there by pressing C.", # 3
   "Now use cursor movement and Space to go over the marked areas and fill them.", # 4
   "Nice! Now let's take these 1's. If the numbers are not added, it means that they should go separately.", # 5
-  "This means that there should be one block filled, one skipped, one filled, one skipped, and so on...", # 6
+  "This means that there should be one block filled, at least one skipped, one filled, at least one skipped, and so on...", # 6
   "If we take a look at the field, it will look something like this. 1st, 3rd and 5th blocks will be filled.", # 7
   "Now it's your turn. Fill those three blocks.", # 8
   "Amazing job! Now you can fill those two remaining empty blocks with crosses by pressing C.", # 9
@@ -149,12 +149,14 @@ tutorialMessages = [
   "Take a look at both, the column numbers and the rows numbers. For instance, these two 1's mean that there should be only two spots filled in this row.", # 21
   "They should have a space between. We already two spots filled, so you can put a cross between and continue with other numbers.",  # 22
   "Let's take these 1's. We solved similar thing already. Not only those three, but also this 1 at the top shows us that this spot should definitely be filled. Fill it.", # 23
+  "The level is almost solved at this point! Let's take a look at this 1. All the spots in this row are with crosses, so the only spot left should be filled. Fill it.", # 24
+  "Now look at these 2's. We already have two 2x1 rectangles so the only space left should be filled with a cross. Complete the level by putting it in place.", # 25
   ]
 tips = [
   "Tip: if a block or the cross is put in a wrong spot, the spot will be filled with a correct object, but the score will not increase."
 ]
-unskippableMessages = [4, 8, 9, 13, 16, 18, 19, 22, 23]
-currentTutorialMessage = 20
+unskippableMessages = [4, 8, 9, 13, 16, 18, 19, 22, 23, 24, 25]
+currentTutorialMessage = 0
 
 totalLevels = 10
 currentLevel = 0
@@ -261,7 +263,7 @@ def loadImages():
   tutorialMessageSurface.blit(skipText, (tutorialMessageSurface.get_size()[0]//2 - skipText.get_size()[0]//2, tutorialMessageSurface.get_size()[1] - skipText.get_size()[1] - 15))
 
   tutorialOverlays = []
-  for i in range(16):
+  for i in range(18):
     tutorialOverlays.append("")
     tutorialOverlays[i] = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
     tutorialOverlays[i].fill((0, 0, 0, 0))
@@ -287,6 +289,12 @@ def loadImages():
   pygame.draw.rect(tutorialOverlays[13], colors["Cross"], (505, HEIGHT-365, 35, 30), 3)
   pygame.draw.rect(tutorialOverlays[14], colors["Cross"], (200, HEIGHT-400, 100, 100), 3)
   pygame.draw.rect(tutorialOverlays[15], colors["Cross"], (200, HEIGHT-500, 100, 100), 3)
+  pygame.draw.rect(tutorialOverlays[15], colors["Cross"], (505, HEIGHT-465, 45, 30), 3)
+  pygame.draw.rect(tutorialOverlays[15], colors["Cross"], (240, HEIGHT-545, 20, 20), 3)
+  pygame.draw.rect(tutorialOverlays[16], colors["Cross"], (505, HEIGHT-165, 20, 30), 3)
+  pygame.draw.rect(tutorialOverlays[16], colors["Cross"], (200, HEIGHT-200, 100, 100), 3)
+  pygame.draw.rect(tutorialOverlays[17], colors["Cross"], (505, HEIGHT-65, 35, 30), 3)
+  pygame.draw.rect(tutorialOverlays[17], colors["Cross"], (200, HEIGHT-100, 100, 100), 3)
 
 def loadPatterns():
   patterns = []
@@ -342,7 +350,7 @@ def updateParams():
   pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0]//2, cursorImage.get_size()[1] - cursorWidth[currentCursorWidth], cursorImage.get_size()[0], cursorImage.get_size()[1]))
   pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0] - cursorWidth[currentCursorWidth], cursorImage.get_size()[1]//2, cursorImage.get_size()[0], cursorImage.get_size()[1]))
 
-  currentTutorialMessage = 20
+  currentTutorialMessage = 23
 
 def drawGrid():
   levelSurface.fill((0, 0, 0, 0))
@@ -402,7 +410,7 @@ def clickedOn(rect, mousePos, isRect = False):
   return False
 
 def updateScreen():
-  global running, menu, _credits, currentLevel, filledPattern, levelsMenu, levelButtons, page, paused, firstFilledPatternTime, levelPassed, creditsTime, currentTutorialMessage, messageSlidingTime
+  global running, menu, _credits, currentLevel, filledPattern, levelsMenu, levelButtons, page, paused, firstFilledPatternTime, levelPassed, creditsTime, currentTutorialMessage, messageSlidingTime, tutorial
 
   levelButtonsX = [200, 280]
   levelButtonsY = 440
@@ -495,6 +503,7 @@ def updateScreen():
 
     if currentLevel == 0 and tutorial:
       tutorialMessageSurfaceX = 0
+      tutorialMessageSurfaceY = tutorialSurface.get_size()[1] - tutorialMessageSurface.get_size()[1]
       tutorialSurface.fill((0, 0, 0, 0))
       tutorialMessageSurface.fill((0, 0, 0, 0))
       pygame.draw.rect(tutorialMessageSurface, (198, 198, 198, 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 0, 15)
@@ -537,11 +546,23 @@ def updateScreen():
           tutorialMessageSurfaceX = 500 - tutorialMessageSurface.get_width()
         tutorialSurface.blit(tutorialOverlays[12], (0, 0))
       elif currentTutorialMessage == 21:
+        messageSlidingTime = 0
         tutorialSurface.blit(tutorialOverlays[13], (0, 0))
       elif currentTutorialMessage == 22:
         tutorialSurface.blit(tutorialOverlays[14], (0, 0))
       elif currentTutorialMessage == 23:
         tutorialSurface.blit(tutorialOverlays[15], (0, 0))
+      elif currentTutorialMessage == 24:
+        if messageSlidingTime == 0:
+          messageSlidingTime = time.time()
+        elif time.time() - messageSlidingTime <= .5:
+          tutorialMessageSurfaceY = (HEIGHT - 500) + ((time.time() - messageSlidingTime) / .5 * (tutorialSurface.get_size()[1] - tutorialMessageSurface.get_size()[1] - 500))
+        else:
+          tutorialMessageSurfaceY = HEIGHT - 500
+        tutorialSurface.blit(tutorialOverlays[16], (0, 0))
+      elif currentTutorialMessage == 25:
+        tutorialSurface.blit(tutorialOverlays[17], (0, 0))
+
       if currentTutorialMessage == 4 and 2 not in filledPattern[2]:
         currentTutorialMessage += 1
       elif currentTutorialMessage == 8 and 2 not in [filledPattern[0][4], filledPattern[2][4], filledPattern[4][4]]:
@@ -556,6 +577,14 @@ def updateScreen():
         currentTutorialMessage += 1
       elif currentTutorialMessage == 19 and (2 not in [filledPattern[i][0] for i in range(5)]) and (2 not in [filledPattern[i][1] for i in range(5)]):
         currentTutorialMessage += 1
+      elif currentTutorialMessage == 22 and filledPattern[1][2] != 2:
+        currentTutorialMessage += 1
+      elif currentTutorialMessage == 23 and filledPattern[0][2] != 2:
+        currentTutorialMessage += 1
+      elif currentTutorialMessage == 24 and filledPattern[3][2] != 2:
+        currentTutorialMessage += 1
+      elif currentTutorialMessage == 25 and filledPattern[4][2] != 2:
+        tutorial = False
       tutorialText = [""]
       currentTutorialMessageText = tutorialMessages[currentTutorialMessage] if firstMistakeSeen else tips[0]
       for word in currentTutorialMessageText.split(" "):
@@ -568,7 +597,7 @@ def updateScreen():
         messageLine = tutorialFontMain.render(line, True, colors["Accent"])
         tutorialMessageSurface.blit(messageLine, (tutorialMessageSurface.get_width()//2 - messageLine.get_width()//2, textY))
         textY += messageLine.get_height() + 3
-      tutorialSurface.blit(tutorialMessageSurface, (tutorialMessageSurfaceX, tutorialSurface.get_size()[1] - tutorialMessageSurface.get_size()[1]))
+      tutorialSurface.blit(tutorialMessageSurface, (tutorialMessageSurfaceX, tutorialMessageSurfaceY))
       screen.blit(tutorialSurface, (0, 0))
 
     if paused:
