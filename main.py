@@ -1,4 +1,4 @@
-import pygame, os, time, textwrap
+import pygame, os, time, json
 from PIL import Image
 
 pygame.init()
@@ -108,7 +108,8 @@ colors = {
   "Accent": (45, 48, 71),
   "Cross": (146, 20, 12),
   "Spare": (194, 197, 187),
-  "Black": (0, 0, 0)
+  "Black": (0, 0, 0),
+  "White": (255, 255, 255)
 }
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 screen.fill(colors["BG"])
@@ -116,13 +117,20 @@ pygame.display.set_caption("igra Artema")
 cursorWidth = [4, 5, 7.5]
 currentCursorWidth = 0
 
+with open(".stats.json", "r") as f:
+  statsData = json.load(f)
 running = True
 menu = True
 _credits = False
 levelsMenu = False
+options = False
 paused = False
 levelPassed = False
-tutorial = True
+tutorial = not statsData["tutorialPassed"]
+lang = statsData["lang"]
+sound = statsData["sound"]
+music = statsData["music"]
+optionsTutorial = False
 firstMistake = False
 firstMistakeSeen = False
 tutorialMessages = [
@@ -133,30 +141,29 @@ tutorialMessages = [
   "Now use cursor movement and Space to go over the marked areas and fill them.", # 4
   "Nice! Now let's take these 1's. If the numbers are not added, it means that they should go separately.", # 5
   "This means that there should be one spot filled, at least one skipped, one filled, at least one skipped, and so on...", # 6
-  "If we take a look at the field, it will look something like this. 1st, 3rd and 5th blocks will be filled.", # 7
-  "Now it's your turn. Fill those three spots.", # 8
-  "Amazing job! Now you can fill those two remaining empty blocks with crosses by pressing C.", # 9
-  "Correct! This will especially help you in the future when solving harder puzzles.", # 10
-  "Look at this column. The numbers 2 and 1 are a bit more complicating to solve. The 2 before the 1 means that 2x1 rectangle should go first - above.", # 11
-  "First, this square is already filled and that means it is a part of 2x1 rectangle, because this is the only way we can fill this column.", # 12
-  "This means that the first spot in the column will remain empty anyways. Put a cross there!", # 13
-  "Now there are four spots left. As said before, rectangles 2x1 and 1x1 should go separately.", # 14
-  "If we assume that this spot is filled - as another part of 2x1 rectangle, then it will be imposible for us to fit one more rectangle as we need some space between.", # 15
-  "Then, the only option for our 2x1 rectangle is to fill this spot. Fill it!", # 16
-  "Now, if we take in count that there should be space left between rectangles, then there is only one option left for our 1x1 rectangle.", # 17
-  "Fill this spot and put a cross at the last spot of the column, at the place of the empty space.", # 18
-  "Perfect! One more column filled and we are closer to the win. Now try to use your knowledge to fill these two columns.", # 19
-  "You are learning so fast! Now, the only column left is the middle one. Considering that we filled all the other columns, it won't be that hard.", # 20
-  "Take a look at both, the column numbers and the rows numbers. For instance, these two 1's mean that there should be only two spots filled in this row.", # 21
-  "They should have a space between. We already have two spots filled, so you can put a cross between and continue with other numbers.",  # 22
-  "Let's take these 1's. We solved similar thing already. Not only those three, but also this 1 at the top shows us that this spot should definitely be filled. Fill it.", # 23
-  "The level is almost solved at this point! Let's take a look at this 1. All the spots in this row are with crosses, so the only spot left should be filled. Fill it.", # 24
-  "Now look at these 2's. We already have two 2x1 rectangles so the only space left should be filled with a cross. Complete the level by putting it in place.", # 25
+  "If we take a look at the field, it will look something like this. 1st, 3rd and 5th blocks will be filled. Now it's your turn. Fill those three spots.", # 7
+  "Amazing job! Now you can fill those two remaining empty blocks with crosses by pressing C.", # 8
+  "Correct! This will especially help you in the future when solving harder puzzles.", # 9
+  "Look at this column. The numbers 2 and 1 are a bit more complicating to solve. The 2 before the 1 means that 2x1 rectangle should go first - above.", # 10
+  "First, this square is already filled and that means it is a part of 2x1 rectangle, because this is the only way we can fill this column.", # 11
+  "This means that the first spot in the column will remain empty anyways. Put a cross there!", # 12
+  "Now there are four spots left. As said before, rectangles 2x1 and 1x1 should go separately.", # 13
+  "If we assume that this spot is filled - as another part of 2x1 rectangle, then it will be imposible for us to fit one more rectangle as we need some space in between.", # 14
+  "Then, the only option for our 2x1 rectangle is to fill this spot. Fill it!", # 15
+  "Now, if we take in count that there should be space left in between rectangles, then there is only one option left for our 1x1 rectangle.", # 16
+  "Fill this spot and put a cross at the last spot of the column, at the place of the empty space.", # 17
+  "Perfect! One more column filled and we are closer to the win. Now try to use your knowledge to fill these two columns.", # 18
+  "You are learning so fast! Now, the only column left is the middle one. Considering that we filled all the other columns, it won't be that hard.", # 19
+  "Take a look at both, the column numbers and the rows numbers. For instance, these two 1's mean that there should be only two spots filled in this row.", # 20
+  "They should have a space in between. We already have two spots filled, so you can put a cross in between and continue with other numbers.",  # 21
+  "Let's take these 1's. We solved similar thing already. Not only those three, but also this 1 at the top shows us that this spot should definitely be filled. Fill it.", # 22
+  "The level is almost solved at this point! Let's take a look at this 1. All the spots in this row are with crosses, so the only spot left should be filled. Fill it.", # 23
+  "Now look at these 2's. We already have two 2x1 rectangles so the only space left should be filled with a cross. Complete the level by putting it in place.", # 24
   ]
 tips = [
   "Tip: if a block or the cross is put in a wrong spot, the spot will be filled with a correct object, but the score will not increase."
 ]
-unskippableMessages = [4, 8, 9, 13, 16, 18, 19, 22, 23, 24, 25]
+unskippableMessages = [4, 7, 8, 12, 15, 17, 18, 21, 22, 23, 24]
 currentTutorialMessage = 0
 
 totalLevels = 10
@@ -177,6 +184,7 @@ sprites.add(cursor)
 mainMenuSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 levelsMenuSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 creditsSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
+optionsSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 levelSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 blocksCrossesSufrace = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 textSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
@@ -185,7 +193,7 @@ levelPassedSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 tutorialSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 
 def loadImages():
-  global mainMenuBG, mainMenuLevelsButton, mainMenuCreditsButton, creditsBG, levelsMenuBG, levelsMenuControlForward, levelsMenuControlBackward, crossSprite, buttonsX, buttonsY, numberFont, scoreFont, levelNumbersFont, pausedBG, pausedButtonMenu, pausedButtonContinue, pausedButtonRestart, pausedButtonsCoordinates, levelPassedButtonMainMenu, levelPassedButtonNextLevel, levelPassedButtonRestart, levelPassedButtonsCoordinates, creditsText, levelPassedButtonCredits, tutorialMessageSurface, tutorialFontMain, tutorialFontSecondary, tutorialOverlays, widthDiff
+  global mainMenuBG, mainMenuLevelsButton, mainMenuCreditsButton, mainMenuTutorialButton, mainMenuOptionsButton, mainMenuButtonsCoordinates, creditsBG, optionsSlider, optionsSliderSliding, optionsMenuButtonsCoordinates, levelsMenuBG, levelsMenuControlForward, levelsMenuControlBackward, levelsMenuButtonsCoordinates, crossSprite, buttonsX, buttonsY, numberFont, scoreFont, levelNumbersFont, pausedBG, pausedButtonMenu, pausedButtonContinue, pausedButtonRestart, pausedButtonsCoordinates, levelPassedButtonMainMenu, levelPassedButtonNextLevel, levelPassedButtonRestart, levelPassedButtonsCoordinates, creditsText, levelPassedButtonCredits, tutorialMessageSurface, tutorialFontMain, tutorialFontSecondary, tutorialOverlays, widthDiff
   
   widthDiff = (WIDTH - 560)//2
 
@@ -207,21 +215,37 @@ def loadImages():
   crossPixels.replace((0, 0, 0, 255), colors["FG"])
   del crossPixels
 
+  # Menu images
   mainMenuBG = pygame.image.load("assets/sprites/mainMenuBG.png")
   mainMenuBG = pygame.transform.smoothscale(mainMenuBG, (WIDTH, HEIGHT))
   mainMenuLevelsButton = pygame.image.load("assets/sprites/mainMenuLevelsButton.png")
   mainMenuLevelsButton = pygame.transform.smoothscale(mainMenuLevelsButton, (mainMenuLevelsButton.get_size()[0]/2, mainMenuLevelsButton.get_size()[1]/2))
   mainMenuCreditsButton = pygame.image.load("assets/sprites/mainMenuCreditsButton.png")
   mainMenuCreditsButton = pygame.transform.smoothscale(mainMenuCreditsButton, (mainMenuCreditsButton.get_size()[0]/2, mainMenuCreditsButton.get_size()[1]/2))
+  mainMenuTutorialButton = pygame.image.load("assets/sprites/mainMenuTutorialButton.png")
+  mainMenuOptionsButton = pygame.image.load("assets/sprites/mainMenuOptionsButton.png")
+  mainMenuButtonsCoordinates = [(90 + widthDiff, 222), (90 + widthDiff, 316), (90 + widthDiff, 409)]
+  # Credits
   creditsBG = pygame.image.load("assets/sprites/credits.png")
   creditsBG = pygame.transform.smoothscale(creditsBG, (WIDTH, HEIGHT))
   creditsText = pygame.image.load("assets/sprites/creditsText.png")
+  # Levels menu
   levelsMenuBG = pygame.image.load("assets/sprites/levels.png")
   levelsMenuBG = pygame.transform.smoothscale(levelsMenuBG, (WIDTH, HEIGHT))
   levelsMenuControlForward = pygame.image.load("assets/sprites/levelsPageControlForward.png")
   levelsMenuControlForward = pygame.transform.smoothscale(levelsMenuControlForward, (levelsMenuControlForward.get_size()[0] // 2, levelsMenuControlForward.get_size()[1] // 2))
   levelsMenuControlBackward = pygame.image.load("assets/sprites/levelsPageControlBackwards.png")
   levelsMenuControlBackward = pygame.transform.smoothscale(levelsMenuControlBackward, (levelsMenuControlBackward.get_size()[0] // 2, levelsMenuControlBackward.get_size()[1] // 2))
+  levelsMenuButtonsCoordinates = [(200, 430), (280, 430)]
+  # Options
+  optionsMenuBG = pygame.image.load("assets/sprites/optionsMenuBG.png")
+  optionsMenuBG = pygame.transform.smoothscale(optionsMenuBG, (WIDTH, HEIGHT))
+  optionsSlider = pygame.Surface((190, 57)).convert_alpha()
+  pygame.draw.rect(optionsSlider, colors["Black"], (0, 0, optionsSlider.get_width(), optionsSlider.get_height()), 0, 14)
+  optionsSliderSliding = pygame.Surface((74, 37)).convert_alpha()
+  pygame.draw.rect(optionsSliderSliding, colors["White"], (0, 0, optionsSliderSliding.get_width(), optionsSliderSliding.get_height()), 0, 8)
+  optionsMenuButtonsCoordinates = [(193 + widthDiff, 203), (285 + widthDiff, 281), (285 + widthDiff, 359), (90 + widthDiff, 436)]
+  # Paused
   pausedButtonContinue = pygame.image.load("assets/sprites/pauseButtonContinue.png").convert_alpha()
   pausedButtonMenu = pygame.image.load("assets/sprites/pauseButtonMenu.png").convert_alpha()
   pausedButtonRestart = pygame.image.load("assets/sprites/pauseButtonRestart.png").convert_alpha()
@@ -236,10 +260,18 @@ def loadImages():
   mainMenuSurface.blit(mainMenuBG, (0, 0))
   buttonsX = WIDTH/2 - mainMenuLevelsButton.get_size()[0]/2
   buttonsY = 270
-  mainMenuSurface.blit(mainMenuLevelsButton, (buttonsX, buttonsY))
-  mainMenuSurface.blit(mainMenuCreditsButton, (buttonsX, buttonsY + mainMenuCreditsButton.get_size()[1] + 20))
+  if tutorial:
+    mainMenuSurface.blit(mainMenuTutorialButton, mainMenuButtonsCoordinates[0])
+    mainMenuSurface.blit(mainMenuLevelsButton, mainMenuButtonsCoordinates[1])
+    mainMenuSurface.blit(mainMenuCreditsButton, mainMenuButtonsCoordinates[2])
+  else:
+    mainMenuSurface.blit(mainMenuLevelsButton, mainMenuButtonsCoordinates[0])
+    mainMenuSurface.blit(mainMenuCreditsButton, mainMenuButtonsCoordinates[1])
+    mainMenuSurface.blit(mainMenuOptionsButton, mainMenuButtonsCoordinates[2])
   creditsSurface.fill(colors["BG"])
   creditsSurface.blit(creditsBG, (0, 0))
+  optionsSurface.blit(optionsMenuBG, (0, 0))
+  optionsSurface.blit(mainMenuTutorialButton, (optionsMenuButtonsCoordinates[3]))
   levelsMenuSurface.blit(levelsMenuBG, (0, 0))
 
   pygame.draw.rect(pausedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 127), (0, 0, WIDTH, HEIGHT))
@@ -259,7 +291,7 @@ def loadImages():
   levelPassedTextCoords = (WIDTH//2-levelPassedText.get_size()[0]//2, 120)
   levelPassedSurface.blit(levelPassedText, (levelPassedTextCoords[0], levelPassedTextCoords[1] + levelPassedText.get_size()[1] + 15))
 
-  tutorialMessageSurface = pygame.Surface((280, 150)).convert_alpha()
+  tutorialMessageSurface = pygame.Surface((290, 150)).convert_alpha()
   pygame.draw.rect(tutorialMessageSurface, (198, 198, 198, 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 0, 15)
   pygame.draw.rect(tutorialMessageSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 5, 15)
   skipText = tutorialFontSecondary.render("Press enter to continue", True, colors["Accent"])
@@ -405,81 +437,113 @@ def drawNumbers():
       levelSurface.blit(numberText, (xCoord, yCoord))
 
 def clickedOn(rect, mousePos, isRect = False):
-  mouseX, mouseY = mousePos
+  mousePos = mousePos
   if not isRect:
     rect = rect.get_rect()
-  if rect.collidepoint(mouseX, mouseY):
+  if rect.collidepoint(mousePos):
     return True
   return False
 
 def updateScreen():
-  global running, menu, _credits, currentLevel, filledPattern, levelsMenu, levelButtons, page, paused, firstFilledPatternTime, levelPassed, creditsTime, currentTutorialMessage, messageSlidingTime, tutorial
-
-  levelButtonsX = [200, 280]
-  levelButtonsY = 440
+  global running, menu, _credits, currentLevel, filledPattern, levelsMenu, levelButtons, page, paused, firstFilledPatternTime, levelPassed, creditsTime, currentTutorialMessage, messageSlidingTime, tutorial, options, tutorial, optionsTutorial, lang, sound, music
 
   for event in pygame.event.get():
     if event.type == pygame.QUIT:
       running = False
 
     elif event.type == pygame.MOUSEBUTTONDOWN:
-      mouseX, mouseY = event.pos
-      if menu and not _credits and not levelsMenu and not paused:
-        if mainMenuLevelsButton.get_rect(topleft=(buttonsX, buttonsY)).collidepoint(mouseX, mouseY):
-          levelsMenu = True
-          page = 0
-        elif mainMenuCreditsButton.get_rect(topleft=(buttonsX, buttonsY + mainMenuCreditsButton.get_size()[1] + 20)).collidepoint(mouseX, mouseY):
-          _credits = True
+      mousePos = event.pos
+      if menu and not _credits and not levelsMenu and not paused and not options:
+        if tutorial:
+          if mainMenuTutorialButton.get_rect(topleft=mainMenuButtonsCoordinates[0]).collidepoint(mousePos):
+            currentLevel = 0
+            updateParams()
+            drawGrid()
+            blocksCrossesSufrace.fill((0, 0, 0, 0))
+            menu = False
+            levelsMenu = False
+          elif mainMenuLevelsButton.get_rect(topleft=mainMenuButtonsCoordinates[1]).collidepoint(mousePos):
+            levelsMenu = True
+            page = 0
+          elif mainMenuCreditsButton.get_rect(topleft=mainMenuButtonsCoordinates[2]).collidepoint(mousePos):
+            _credits = True
+        else:
+          if mainMenuLevelsButton.get_rect(topleft=mainMenuButtonsCoordinates[0]).collidepoint(mousePos):
+            levelsMenu = True
+            page = 0
+          elif mainMenuCreditsButton.get_rect(topleft=mainMenuButtonsCoordinates[1]).collidepoint(mousePos):
+            _credits = True
+          elif mainMenuOptionsButton.get_rect(topleft=mainMenuButtonsCoordinates[2]).collidepoint(mousePos):
+            options = True
+            
       elif levelsMenu:
         for button in levelButtons[page]:
           buttonRect = pygame.Rect(button[2][0], button[2][1], 75, 75)
-          if clickedOn(buttonRect, (mouseX, mouseY), True):
+          if clickedOn(buttonRect, (mousePos), True):
             currentLevel = button[1]
             updateParams()
             drawGrid()
             blocksCrossesSufrace.fill((0, 0, 0, 0))
             menu = False
             levelsMenu = False
-        if levelsMenuControlForward.get_rect(topleft=(levelButtonsX[1], levelButtonsY)).collidepoint(mouseX, mouseY):
+        if levelsMenuControlForward.get_rect(topleft=levelsMenuButtonsCoordinates[1]).collidepoint(mousePos):
           page += 1
-        elif levelsMenuControlBackward.get_rect(topleft=(levelButtonsX[0], levelButtonsY)).collidepoint(mouseX, mouseY):
+        elif levelsMenuControlBackward.get_rect(topleft=levelsMenuButtonsCoordinates[0]).collidepoint(mousePos):
           page -= 1
       elif paused:
-        if pausedButtonContinue.get_rect(topleft=pausedButtonsCoordinates[0]).collidepoint(mouseX, mouseY):
+        if pausedButtonContinue.get_rect(topleft=pausedButtonsCoordinates[0]).collidepoint(mousePos):
           paused = False
-        elif pausedButtonMenu.get_rect(topleft=pausedButtonsCoordinates[1]).collidepoint(mouseX, mouseY):
+        elif pausedButtonMenu.get_rect(topleft=pausedButtonsCoordinates[1]).collidepoint(mousePos):
           paused = False
           menu = True
-        elif pausedButtonRestart.get_rect(topleft=pausedButtonsCoordinates[2]).collidepoint(mouseX, mouseY):
+          if optionsTutorial and tutorial:
+            tutorial = False
+        elif pausedButtonRestart.get_rect(topleft=pausedButtonsCoordinates[2]).collidepoint(mousePos):
           paused = False
           updateParams()
           drawGrid()
           blocksCrossesSufrace.fill((0, 0, 0, 0))
       elif levelPassed:
         if len(patterns) - 1 != currentLevel:
-          if levelPassedButtonNextLevel.get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mouseX, mouseY):
+          if levelPassedButtonNextLevel.get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mousePos):
             currentLevel += 1
             updateParams()
             drawGrid()
             blocksCrossesSufrace.fill((0, 0, 0, 0))
             levelPassed = False
-          elif levelPassedButtonMainMenu.get_rect(topleft=levelPassedButtonsCoordinates[1]).collidepoint(mouseX, mouseY):
+          elif levelPassedButtonMainMenu.get_rect(topleft=levelPassedButtonsCoordinates[1]).collidepoint(mousePos):
             levelPassed = False
             menu = True
         else:
-          if levelPassedButtonMainMenu.get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mouseX, mouseY):
+          if levelPassedButtonMainMenu.get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mousePos):
             levelPassed = False
             menu = True
-          elif levelPassedButtonCredits.get_rect(topleft=levelPassedButtonsCoordinates[1]).collidepoint(mouseX, mouseY):
+          elif levelPassedButtonCredits.get_rect(topleft=levelPassedButtonsCoordinates[1]).collidepoint(mousePos):
             levelPassed = False
             menu = True
             _credits = True
-        if levelPassedButtonRestart.get_rect(topleft=levelPassedButtonsCoordinates[2]).collidepoint(mouseX, mouseY):
+        if levelPassedButtonRestart.get_rect(topleft=levelPassedButtonsCoordinates[2]).collidepoint(mousePos):
           updateParams()
           drawGrid()
           blocksCrossesSufrace.fill((0, 0, 0, 0))
           levelPassed = False
-
+      elif options:
+        if optionsSlider.get_rect(topleft=optionsMenuButtonsCoordinates[0]).collidepoint(mousePos):
+          lang = "eng" if lang == "ua" else "ua"
+        elif optionsSlider.get_rect(topleft=optionsMenuButtonsCoordinates[1]).collidepoint(mousePos):
+          sound = False if sound else True
+        elif optionsSlider.get_rect(topleft=optionsMenuButtonsCoordinates[2]).collidepoint(mousePos):
+          music = False if music else True
+        elif mainMenuTutorialButton.get_rect(topleft=optionsMenuButtonsCoordinates[3]).collidepoint(mousePos):
+          tutorial = True
+          optionsTutorial = True
+          currentLevel = 0
+          updateParams()
+          drawGrid()
+          blocksCrossesSufrace.fill((0, 0, 0, 0))
+          menu = False
+          options = False
+  
     elif pygame.key.get_pressed()[pygame.K_ESCAPE]:
       if levelsMenu:
         levelsMenu = False
@@ -521,25 +585,25 @@ def updateScreen():
         tutorialSurface.blit(tutorialOverlays[1], (0, 0))
       elif currentTutorialMessage in [5, 6]:
         tutorialSurface.blit(tutorialOverlays[2], (0, 0))
-      elif currentTutorialMessage in [7, 8]:
+      elif currentTutorialMessage == 7:
         tutorialSurface.blit(tutorialOverlays[3], (0, 0))
-      elif currentTutorialMessage == 9:
+      elif currentTutorialMessage == 8:
         tutorialSurface.blit(tutorialOverlays[4], (0, 0))
-      elif currentTutorialMessage == 11:
+      elif currentTutorialMessage == 10:
         tutorialSurface.blit(tutorialOverlays[5], (0, 0))
-      elif currentTutorialMessage == 12:
+      elif currentTutorialMessage == 11:
         tutorialSurface.blit(tutorialOverlays[6], (0, 0))
-      elif currentTutorialMessage == 13:
+      elif currentTutorialMessage == 12:
         tutorialSurface.blit(tutorialOverlays[7], (0, 0))
-      elif currentTutorialMessage == 14:
+      elif currentTutorialMessage == 13:
         tutorialSurface.blit(tutorialOverlays[8], (0, 0))
-      elif currentTutorialMessage == 15:
+      elif currentTutorialMessage == 14:
         tutorialSurface.blit(tutorialOverlays[9], (0, 0))
-      elif currentTutorialMessage == 16:
+      elif currentTutorialMessage == 15:
         tutorialSurface.blit(tutorialOverlays[10], (0, 0))
-      elif currentTutorialMessage in [17, 18]:
+      elif currentTutorialMessage in [16, 17]:
         tutorialSurface.blit(tutorialOverlays[11], (0, 0))
-      elif currentTutorialMessage == 19:
+      elif currentTutorialMessage == 18:
         if messageSlidingTime == 0:
           messageSlidingTime = time.time()
         elif time.time() - messageSlidingTime <= .5:
@@ -547,20 +611,20 @@ def updateScreen():
         else:
           tutorialMessageSurfaceX = 500 - tutorialMessageSurface.get_width()
         tutorialSurface.blit(tutorialOverlays[12], (0, 0))
-      elif currentTutorialMessage == 20:
+      elif currentTutorialMessage == 19:
         if messageSlidingTime == 0:
           messageSlidingTime = time.time()
         elif time.time() - messageSlidingTime <= .5:
           tutorialMessageSurfaceX = 500 - tutorialMessageSurface.get_width() - (time.time() - messageSlidingTime) / .5 * (500 - tutorialMessageSurface.get_width())
         else: tutorialMessageSurfaceX = 0
-      elif currentTutorialMessage == 21:
+      elif currentTutorialMessage == 20:
         messageSlidingTime = 0
         tutorialSurface.blit(tutorialOverlays[13], (0, 0))
-      elif currentTutorialMessage == 22:
+      elif currentTutorialMessage == 21:
         tutorialSurface.blit(tutorialOverlays[14], (0, 0))
-      elif currentTutorialMessage == 23:
+      elif currentTutorialMessage == 22:
         tutorialSurface.blit(tutorialOverlays[15], (0, 0))
-      elif currentTutorialMessage == 24:
+      elif currentTutorialMessage == 23:
         if messageSlidingTime == 0:
           messageSlidingTime = time.time()
         elif time.time() - messageSlidingTime <= .5:
@@ -568,32 +632,32 @@ def updateScreen():
         else:
           tutorialMessageSurfaceY = HEIGHT - 500
         tutorialSurface.blit(tutorialOverlays[16], (0, 0))
-      elif currentTutorialMessage == 25:
+      elif currentTutorialMessage == 24:
         tutorialMessageSurfaceY = HEIGHT - 500
         tutorialSurface.blit(tutorialOverlays[17], (0, 0))
 
       if currentTutorialMessage == 4 and 2 not in filledPattern[2]:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 8 and 2 not in [filledPattern[0][4], filledPattern[2][4], filledPattern[4][4]]:
+      elif currentTutorialMessage == 7 and 2 not in [filledPattern[0][4], filledPattern[2][4], filledPattern[4][4]]:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 9 and 2 not in [filledPattern[1][4], filledPattern[3][4]]:
+      elif currentTutorialMessage == 8 and 2 not in [filledPattern[1][4], filledPattern[3][4]]:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 13 and filledPattern[0][3] != 2:
+      elif currentTutorialMessage == 12 and filledPattern[0][3] != 2:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 16 and filledPattern[1][3] != 2:
+      elif currentTutorialMessage == 15 and filledPattern[1][3] != 2:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 18 and 2 not in [filledPattern[3][3], filledPattern[4][3]]:
+      elif currentTutorialMessage == 17 and 2 not in [filledPattern[3][3], filledPattern[4][3]]:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 19 and (2 not in [filledPattern[i][0] for i in range(5)]) and (2 not in [filledPattern[i][1] for i in range(5)]):
+      elif currentTutorialMessage == 18 and (2 not in [filledPattern[i][0] for i in range(5)]) and (2 not in [filledPattern[i][1] for i in range(5)]):
         currentTutorialMessage += 1
         messageSlidingTime = 0
-      elif currentTutorialMessage == 22 and filledPattern[1][2] != 2:
+      elif currentTutorialMessage == 21 and filledPattern[1][2] != 2:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 23 and filledPattern[0][2] != 2:
+      elif currentTutorialMessage == 22 and filledPattern[0][2] != 2:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 24 and filledPattern[3][2] != 2:
+      elif currentTutorialMessage == 23 and filledPattern[3][2] != 2:
         currentTutorialMessage += 1
-      elif currentTutorialMessage == 25 and filledPattern[4][2] != 2:
+      elif currentTutorialMessage == 24 and filledPattern[4][2] != 2:
         tutorial = False
       tutorialText = [""]
       currentTutorialMessageText = tutorialMessages[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tips[0]
@@ -632,7 +696,7 @@ def updateScreen():
       levelPassed = False
   
   else:
-    if not _credits and not levelsMenu:
+    if not _credits and not levelsMenu and not options:
       screen.blit(mainMenuSurface, (0, 0))
     elif _credits:
       movementDuration = 15
@@ -659,11 +723,33 @@ def updateScreen():
         levelsMenuSurface.blit(levelButtons[page][surface][0], levelButtons[page][surface][2])
 
       if len(levelButtons) - 1 > page:
-        levelsMenuSurface.blit(levelsMenuControlForward, (levelButtonsX[1], levelButtonsY))
+        levelsMenuSurface.blit(levelsMenuControlForward, levelsMenuButtonsCoordinates[1])
       if page > 0:
-        levelsMenuSurface.blit(levelsMenuControlBackward, (levelButtonsX[0], levelButtonsY))
+        levelsMenuSurface.blit(levelsMenuControlBackward, levelsMenuButtonsCoordinates[0])
 
       screen.blit(levelsMenuSurface, (0, 0))
+    elif options:
+      for i in range(3):
+        if i == 0:
+          if lang == "ua":
+            optionsSlider.blit(optionsSliderSliding, (optionsSlider.get_width() - optionsSliderSliding.get_width() - 10, 10))
+          else:
+            optionsSlider.blit(optionsSliderSliding, (10, 10))
+        elif i == 1:
+          if sound:
+            optionsSlider.blit(optionsSliderSliding, (optionsSlider.get_width() - optionsSliderSliding.get_width() - 10, 10))
+          else:
+            optionsSlider.blit(optionsSliderSliding, (10, 10))
+        elif i == 2:
+          if music:
+            optionsSlider.blit(optionsSliderSliding, (optionsSlider.get_width() - optionsSliderSliding.get_width() - 10, 10))
+          else:
+            optionsSlider.blit(optionsSliderSliding, (10, 10))
+        optionsSurface.blit(optionsSlider, optionsMenuButtonsCoordinates[i])
+        optionsSlider.fill((0, 0, 0, 0))
+        pygame.draw.rect(optionsSlider, colors["Black"], (0, 0, optionsSlider.get_width(), optionsSlider.get_height()), 0, 14)
+      
+      screen.blit(optionsSurface, (0, 0))
 
   pygame.display.update()
 
@@ -682,5 +768,11 @@ def main():
 main()
 
 os.system("clear")
+
+with open(".stats.json", "w") as f:
+  statsData["lang"] = lang
+  statsData["sound"] = sound
+  statsData["music"] = music
+  json.dump(statsData, f)
 
 pygame.quit()
