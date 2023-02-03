@@ -24,7 +24,7 @@ class cursorSprite(pygame.sprite.Sprite):
     self.playerScore = 0
 
   def update(self):
-    global menu, _credits, paused, currentTutorialMessage, firstMistakeSeen
+    global menu, _credits, paused, currentTutorialMessage, firstMistake, firstMistakeSeen
     keys = pygame.key.get_pressed()
     if not paused:
       if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -75,8 +75,9 @@ class cursorSprite(pygame.sprite.Sprite):
       elif patterns[currentLevel][self.cursorY][self.cursorX] == 1 and filledPattern[self.cursorY][self.cursorX] == 2:
         filledPattern[self.cursorY][self.cursorX] = 1
         blocksCrossesSufrace.blit(crossSprite, (self.rect.x, self.rect.y))
-        if tutorial:
-          firstMistakeSeen = False
+        if tutorial and not firstMistake:
+          firstMistake = True
+          print(firstMistake, 2)
     elif keys[pygame.K_c]:
       if patterns[currentLevel][self.cursorY][self.cursorX] == 1 and filledPattern[self.cursorY][self.cursorX] == 2:
         filledPattern[self.cursorY][self.cursorX] = 1
@@ -85,12 +86,12 @@ class cursorSprite(pygame.sprite.Sprite):
       elif patterns[currentLevel][self.cursorY][self.cursorX] == 0 and filledPattern[self.cursorY][self.cursorX] == 2:
         filledPattern[self.cursorY][self.cursorX] = 0
         pygame.draw.rect(blocksCrossesSufrace, colors["FG"], (self.rect.x, self.rect.y, self.step, self.step))
-        if tutorial:
-          firstMistakeSeen = False
+        if tutorial and not firstMistake:
+          firstMistake = True
     elif keys[pygame.K_RETURN]:
-      if len(tutorialMessages) - 1 != currentTutorialMessage and not self.returnPressed and not currentTutorialMessage in unskippableMessages and firstMistakeSeen:
+      if len(tutorialMessages) - 1 != currentTutorialMessage and not self.returnPressed and not currentTutorialMessage in unskippableMessages and (not firstMistake or firstMistakeSeen):
         currentTutorialMessage += 1
-      elif not firstMistakeSeen:
+      elif not firstMistakeSeen and firstMistake:
         firstMistakeSeen = True
       self.returnPressed = True
     else:
@@ -123,17 +124,17 @@ paused = False
 levelPassed = False
 tutorial = True
 firstMistake = False
-firstMistakeSeen = True
+firstMistakeSeen = False
 tutorialMessages = [
-  "Welcome to the tutorial. Here you will learn to play this game. Movement is performed with arrow keys or WASD keys. Press them to move cursor up, down, left and right.", # 0
+  "Welcome! In this tutorial you will learn to play the game. Movement is performed with arrow keys or WASD keys. Press them to move cursor up, down, left and right.", # 0
   "Numbers on the top and right sides of the field indicate which parts of the field should be filled, and which not.", # 1
   "For instance, this number 5 means that all 5 parts of the row should be filled, as the size of this level is 5x5.", # 2
   "To fill a space on the field press Space. If you see that the area should remain unfilled, put the cross there by pressing C.", # 3
   "Now use cursor movement and Space to go over the marked areas and fill them.", # 4
   "Nice! Now let's take these 1's. If the numbers are not added, it means that they should go separately.", # 5
-  "This means that there should be one block filled, at least one skipped, one filled, at least one skipped, and so on...", # 6
+  "This means that there should be one spot filled, at least one skipped, one filled, at least one skipped, and so on...", # 6
   "If we take a look at the field, it will look something like this. 1st, 3rd and 5th blocks will be filled.", # 7
-  "Now it's your turn. Fill those three blocks.", # 8
+  "Now it's your turn. Fill those three spots.", # 8
   "Amazing job! Now you can fill those two remaining empty blocks with crosses by pressing C.", # 9
   "Correct! This will especially help you in the future when solving harder puzzles.", # 10
   "Look at this column. The numbers 2 and 1 are a bit more complicating to solve. The 2 before the 1 means that 2x1 rectangle should go first - above.", # 11
@@ -147,7 +148,7 @@ tutorialMessages = [
   "Perfect! One more column filled and we are closer to the win. Now try to use your knowledge to fill these two columns.", # 19
   "You are learning so fast! Now, the only column left is the middle one. Considering that we filled all the other columns, it won't be that hard.", # 20
   "Take a look at both, the column numbers and the rows numbers. For instance, these two 1's mean that there should be only two spots filled in this row.", # 21
-  "They should have a space between. We already two spots filled, so you can put a cross between and continue with other numbers.",  # 22
+  "They should have a space between. We already have two spots filled, so you can put a cross between and continue with other numbers.",  # 22
   "Let's take these 1's. We solved similar thing already. Not only those three, but also this 1 at the top shows us that this spot should definitely be filled. Fill it.", # 23
   "The level is almost solved at this point! Let's take a look at this 1. All the spots in this row are with crosses, so the only spot left should be filled. Fill it.", # 24
   "Now look at these 2's. We already have two 2x1 rectangles so the only space left should be filled with a cross. Complete the level by putting it in place.", # 25
@@ -184,7 +185,9 @@ levelPassedSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 tutorialSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 
 def loadImages():
-  global mainMenuBG, mainMenuLevelsButton, mainMenuCreditsButton, creditsBG, levelsMenuBG, levelsMenuControlForward, levelsMenuControlBackward, crossSprite, buttonsX, buttonsY, numberFont, scoreFont, levelNumbersFont, pausedBG, pausedButtonMenu, pausedButtonContinue, pausedButtonRestart, pausedButtonsCoordinates, levelPassedButtonMainMenu, levelPassedButtonNextLevel, levelPassedButtonRestart, levelPassedButtonsCoordinates, creditsText, levelPassedButtonCredits, tutorialMessageSurface, tutorialFontMain, tutorialFontSecondary, tutorialOverlays
+  global mainMenuBG, mainMenuLevelsButton, mainMenuCreditsButton, creditsBG, levelsMenuBG, levelsMenuControlForward, levelsMenuControlBackward, crossSprite, buttonsX, buttonsY, numberFont, scoreFont, levelNumbersFont, pausedBG, pausedButtonMenu, pausedButtonContinue, pausedButtonRestart, pausedButtonsCoordinates, levelPassedButtonMainMenu, levelPassedButtonNextLevel, levelPassedButtonRestart, levelPassedButtonsCoordinates, creditsText, levelPassedButtonCredits, tutorialMessageSurface, tutorialFontMain, tutorialFontSecondary, tutorialOverlays, widthDiff
+  
+  widthDiff = (WIDTH - 560)//2
 
   numberFont = pygame.font.Font("assets/Fonts/Main/static/SofiaSans-SemiBold.ttf", 16)
   scoreFont = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 20)
@@ -222,12 +225,12 @@ def loadImages():
   pausedButtonContinue = pygame.image.load("assets/sprites/pauseButtonContinue.png").convert_alpha()
   pausedButtonMenu = pygame.image.load("assets/sprites/pauseButtonMenu.png").convert_alpha()
   pausedButtonRestart = pygame.image.load("assets/sprites/pauseButtonRestart.png").convert_alpha()
-  pausedButtonsCoordinates = [(86, 187), (86, 287), (86, 387)]
+  pausedButtonsCoordinates = [(86 + widthDiff, 187), (86 + widthDiff, 287), (86 + widthDiff, 387)]
   levelPassedButtonNextLevel = pygame.image.load("assets/sprites/levelPassedButtonNextLevel.png").convert_alpha()
   levelPassedButtonMainMenu = pygame.image.load("assets/sprites/levelPassedButtonMainMenu.png").convert_alpha()
   levelPassedButtonRestart = pygame.image.load("assets/sprites/levelPassedButtonRestart.png").convert_alpha()
   levelPassedButtonCredits = pygame.image.load("assets/sprites/levelPassedButtonCredits.png").convert_alpha()
-  levelPassedButtonsCoordinates = [(86, 212), (86, 312), (86, 412)]
+  levelPassedButtonsCoordinates = [(86 + widthDiff, 212), (86 + widthDiff, 312), (86 + widthDiff, 412)]
 
   mainMenuSurface.fill(colors["BG"])
   mainMenuSurface.blit(mainMenuBG, (0, 0))
@@ -240,15 +243,15 @@ def loadImages():
   levelsMenuSurface.blit(levelsMenuBG, (0, 0))
 
   pygame.draw.rect(pausedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 127), (0, 0, WIDTH, HEIGHT))
-  pygame.draw.rect(pausedSurface, (198, 198, 198, 229), (47, 152, 462, 341), 0, 15)
-  pygame.draw.rect(pausedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (47, 152, 462, 341), 5, 15)
+  pygame.draw.rect(pausedSurface, (198, 198, 198, 229), (47 + widthDiff, 152, 462, 341), 0, 15)
+  pygame.draw.rect(pausedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (47 + widthDiff, 152, 462, 341), 5, 15)
   pausedSurface.blit(pausedButtonContinue, pausedButtonsCoordinates[0])
   pausedSurface.blit(pausedButtonMenu, pausedButtonsCoordinates[1])
   pausedSurface.blit(pausedButtonRestart, pausedButtonsCoordinates[2])
 
   pygame.draw.rect(levelPassedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 127), (0, 0, WIDTH, HEIGHT))
-  pygame.draw.rect(levelPassedSurface, (198, 198, 198, 229), (23, 95, 510, 421), 0, 15)
-  pygame.draw.rect(levelPassedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (23, 95, 510, 421), 5, 15)
+  pygame.draw.rect(levelPassedSurface, (198, 198, 198, 229), (23 + widthDiff, 95, 510, 421), 0, 15)
+  pygame.draw.rect(levelPassedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (23 + widthDiff, 95, 510, 421), 5, 15)
   levelPassedText = menuFont.render("Congratulations!", True, colors["Accent"])
   levelPassedTextCoords = (WIDTH//2-levelPassedText.get_size()[0]//2, 120)
   levelPassedSurface.blit(levelPassedText, (levelPassedTextCoords[0], levelPassedTextCoords[1]))
@@ -350,7 +353,7 @@ def updateParams():
   pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0]//2, cursorImage.get_size()[1] - cursorWidth[currentCursorWidth], cursorImage.get_size()[0], cursorImage.get_size()[1]))
   pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0] - cursorWidth[currentCursorWidth], cursorImage.get_size()[1]//2, cursorImage.get_size()[0], cursorImage.get_size()[1]))
 
-  currentTutorialMessage = 23
+  currentTutorialMessage = 0
 
 def drawGrid():
   levelSurface.fill((0, 0, 0, 0))
@@ -487,7 +490,6 @@ def updateScreen():
   screen.fill(colors["BG"])
 
   if not menu:
-
     textSurface.fill((255, 255, 255, 0))
     playerScore = scoreFont.render("Score: " + str(cursor.playerScore), True, colors["Accent"])
     textSurface.blit(playerScore, (WIDTH - playerScore.get_size()[0] - 20, 20))
@@ -545,6 +547,12 @@ def updateScreen():
         else:
           tutorialMessageSurfaceX = 500 - tutorialMessageSurface.get_width()
         tutorialSurface.blit(tutorialOverlays[12], (0, 0))
+      elif currentTutorialMessage == 20:
+        if messageSlidingTime == 0:
+          messageSlidingTime = time.time()
+        elif time.time() - messageSlidingTime <= .5:
+          tutorialMessageSurfaceX = 500 - tutorialMessageSurface.get_width() - (time.time() - messageSlidingTime) / .5 * (500 - tutorialMessageSurface.get_width())
+        else: tutorialMessageSurfaceX = 0
       elif currentTutorialMessage == 21:
         messageSlidingTime = 0
         tutorialSurface.blit(tutorialOverlays[13], (0, 0))
@@ -556,11 +564,12 @@ def updateScreen():
         if messageSlidingTime == 0:
           messageSlidingTime = time.time()
         elif time.time() - messageSlidingTime <= .5:
-          tutorialMessageSurfaceY = (HEIGHT - 500) + ((time.time() - messageSlidingTime) / .5 * (tutorialSurface.get_size()[1] - tutorialMessageSurface.get_size()[1] - 500))
+          tutorialMessageSurfaceY = (HEIGHT - tutorialMessageSurface.get_size()[1]) - ((time.time() - messageSlidingTime) / .5 * (500 - tutorialMessageSurface.get_size()[1]))
         else:
           tutorialMessageSurfaceY = HEIGHT - 500
         tutorialSurface.blit(tutorialOverlays[16], (0, 0))
       elif currentTutorialMessage == 25:
+        tutorialMessageSurfaceY = HEIGHT - 500
         tutorialSurface.blit(tutorialOverlays[17], (0, 0))
 
       if currentTutorialMessage == 4 and 2 not in filledPattern[2]:
@@ -577,6 +586,7 @@ def updateScreen():
         currentTutorialMessage += 1
       elif currentTutorialMessage == 19 and (2 not in [filledPattern[i][0] for i in range(5)]) and (2 not in [filledPattern[i][1] for i in range(5)]):
         currentTutorialMessage += 1
+        messageSlidingTime = 0
       elif currentTutorialMessage == 22 and filledPattern[1][2] != 2:
         currentTutorialMessage += 1
       elif currentTutorialMessage == 23 and filledPattern[0][2] != 2:
@@ -586,9 +596,9 @@ def updateScreen():
       elif currentTutorialMessage == 25 and filledPattern[4][2] != 2:
         tutorial = False
       tutorialText = [""]
-      currentTutorialMessageText = tutorialMessages[currentTutorialMessage] if firstMistakeSeen else tips[0]
+      currentTutorialMessageText = tutorialMessages[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tips[0]
       for word in currentTutorialMessageText.split(" "):
-        if tutorialFontMain.render(tutorialText[-1], True, colors["Accent"]).get_width() + 32 >= tutorialMessageSurface.get_width() - 32:
+        if tutorialFontMain.render(tutorialText[-1], True, colors["Accent"]).get_width() + 40 >= tutorialMessageSurface.get_width() - 40:
           tutorialText[-1] = tutorialText[-1][:-1]
           tutorialText.append("")
         tutorialText[-1] += word + " "
