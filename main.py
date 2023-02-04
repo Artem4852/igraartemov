@@ -4,10 +4,9 @@ from PIL import Image
 pygame.init()
 
 class cursorSprite(pygame.sprite.Sprite):
-  def __init__(self, x, y, imagePath):
+  def __init__(self, x, y, image):
     super().__init__()
-    # self.image = pygame.image.load(imagePath).convert_alpha()
-    self.image = imagePath
+    self.image = image
     self.rect = self.image.get_rect()
     self.rect.x = x
     self.rect.y = y
@@ -163,6 +162,10 @@ tutorialMessages = [
 tips = [
   "Tip: if a block or the cross is put in a wrong spot, the spot will be filled with a correct object, but the score will not increase."
 ]
+tutorialMessagesUa = [
+  "Вітання! В цьому туторіалі ви навчитесь грати. Для руху можна використовувати стрілки або клавіші WASD. Курсор рухається вгору, вниз, вправо та вліво.",
+  "Числа над полем та справа від нього вказують які частини поля повинні бути заповнені, а які ні.",
+]
 unskippableMessages = [4, 7, 8, 12, 15, 17, 18, 21, 22, 23, 24]
 currentTutorialMessage = 0
 
@@ -192,8 +195,10 @@ pausedSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 levelPassedSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 tutorialSurface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 
-def loadImages():
-  global mainMenuBG, mainMenuLevelsButton, mainMenuCreditsButton, mainMenuTutorialButton, mainMenuOptionsButton, mainMenuButtonsCoordinates, creditsBG, optionsSlider, optionsSliderSliding, optionsMenuButtonsCoordinates, levelsMenuBG, levelsMenuControlForward, levelsMenuControlBackward, levelsMenuButtonsCoordinates, crossSprite, buttonsX, buttonsY, numberFont, scoreFont, levelNumbersFont, pausedBG, pausedButtonMenu, pausedButtonContinue, pausedButtonRestart, pausedButtonsCoordinates, levelPassedButtonMainMenu, levelPassedButtonNextLevel, levelPassedButtonRestart, levelPassedButtonsCoordinates, creditsText, levelPassedButtonCredits, tutorialMessageSurface, tutorialFontMain, tutorialFontSecondary, tutorialOverlays, widthDiff
+def prepareAssets():
+  global mainMenuBG, mainMenuButtons, creditsBG, optionsSlider, optionsSliderSliding, levelsMenuBG, levelsMenuTitle, levelsMenuControlForward, levelsMenuControlBackward, pausedBG, pausedButtons, levelPassedButtons, creditsText, levelPassedButtonCredits, tutorialMessageSurface, tutorialOverlays, crossSprite, widthDiff
+  global mainMenuButtonsCoordinates, optionsMenuButtonsCoordinates, levelsMenuButtonsCoordinates, pausedButtonsCoordinates, levelPassedButtonsCoordinates, levelsMenuTitleCoordinates
+  global numberFont, scoreFont, levelNumbersFont, tutorialFont, pressStartFontTutorial, pressStartFontPrimary, pressStartFontTitle
   
   widthDiff = (WIDTH - 560)//2
 
@@ -201,102 +206,116 @@ def loadImages():
   scoreFont = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 20)
   levelNumbersFont = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 24)
   menuFont = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 26)
-  tutorialFontMain = pygame.font.Font("assets/Fonts/merriweather/Merriweather-Regular.otf", 14)
-  tutorialFontSecondary = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 8)
-
-  cursorImage.fill((0, 0, 0, 0))
-  pygame.draw.rect(cursorImage, colors["Accent"], (0, 0, cursorImage.get_size()[0]//2, cursorWidth[currentCursorWidth]))
-  pygame.draw.rect(cursorImage, colors["Accent"], (0, 0, cursorWidth[currentCursorWidth], cursorImage.get_size()[1]//2))
-  pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0]//2, cursorImage.get_size()[1] - cursorWidth[currentCursorWidth], cursorImage.get_size()[0], cursorImage.get_size()[1]))
-  pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0] - cursorWidth[currentCursorWidth], cursorImage.get_size()[1]//2, cursorImage.get_size()[0], cursorImage.get_size()[1]))
+  tutorialFont = pygame.font.Font("assets/Fonts/merriweather/Merriweather-Regular.otf", 14)
+  pressStartFontPrimary = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 32)
+  pressStartFontSecondary = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 26)
+  pressStartFontTitle = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 48)
+  pressStartFontTutorial = pygame.font.Font("assets/Fonts/PressStart2P-Regular.ttf", 8)
   
   crossSprite = pygame.image.load("assets/sprites/cross.png").convert_alpha()
   crossPixels = pygame.PixelArray(crossSprite)
   crossPixels.replace((0, 0, 0, 255), colors["FG"])
   del crossPixels
 
-  # Menu images
+  # Menu
   mainMenuBG = pygame.image.load("assets/sprites/mainMenuBG.png")
   mainMenuBG = pygame.transform.smoothscale(mainMenuBG, (WIDTH, HEIGHT))
-  mainMenuLevelsButton = pygame.image.load("assets/sprites/mainMenuLevelsButton.png")
-  mainMenuLevelsButton = pygame.transform.smoothscale(mainMenuLevelsButton, (mainMenuLevelsButton.get_size()[0]/2, mainMenuLevelsButton.get_size()[1]/2))
-  mainMenuCreditsButton = pygame.image.load("assets/sprites/mainMenuCreditsButton.png")
-  mainMenuCreditsButton = pygame.transform.smoothscale(mainMenuCreditsButton, (mainMenuCreditsButton.get_size()[0]/2, mainMenuCreditsButton.get_size()[1]/2))
-  mainMenuTutorialButton = pygame.image.load("assets/sprites/mainMenuTutorialButton.png")
-  mainMenuOptionsButton = pygame.image.load("assets/sprites/mainMenuOptionsButton.png")
+  mainMenuSurface.fill(colors["BG"])
+  mainMenuSurface.blit(mainMenuBG, (0, 0))
+  mainMenuButtons = []
+  for i in range(4):
+    mainMenuButton = pygame.Surface((380, 75)).convert_alpha()
+    pygame.draw.rect(mainMenuButton, colors["Black"], (0, 0, mainMenuButton.get_size()[0], mainMenuButton.get_size()[1]), 0, 14)
+    if lang == "eng": text = "Levels" if i == 0 else "Credits" if i == 1 else "Options" if i == 2 else "Tutorial"
+    elif lang == "ua": text = "Рівні" if i == 0 else "Титри" if i == 1 else "Налаштування" if i == 2 else "Туторіал"
+    buttonText = pressStartFontSecondary.render(text, True, colors["White"], None)
+    mainMenuButton.blit(buttonText, (mainMenuButton.get_width()/2 - buttonText.get_width()/2, mainMenuButton.get_height()/2 - buttonText.get_height()/2))
+    mainMenuButtons.append(mainMenuButton)
   mainMenuButtonsCoordinates = [(90 + widthDiff, 222), (90 + widthDiff, 316), (90 + widthDiff, 409)]
+  for i in range(3):
+    if tutorial: mainMenuSurface.blit(mainMenuButtons[i-1], mainMenuButtonsCoordinates[i])
+    else: mainMenuSurface.blit(mainMenuButtons[i], mainMenuButtonsCoordinates[i])
+  
   # Credits
   creditsBG = pygame.image.load("assets/sprites/credits.png")
   creditsBG = pygame.transform.smoothscale(creditsBG, (WIDTH, HEIGHT))
   creditsText = pygame.image.load("assets/sprites/creditsText.png")
+  creditsSurface.fill(colors["BG"])
+  creditsSurface.blit(creditsBG, (0, 0))
+  
   # Levels menu
   levelsMenuBG = pygame.image.load("assets/sprites/levels.png")
   levelsMenuBG = pygame.transform.smoothscale(levelsMenuBG, (WIDTH, HEIGHT))
+  levelsMenuTitle = pressStartFontTitle.render("Levels" if lang == "eng" else "Рівні", True, colors["Black"])
+  levelsMenuTitleCoordinates = [(WIDTH/2 - levelsMenuTitle.get_width()/2, 150)]
+  levelsMenuSurface.blit(levelsMenuTitle, levelsMenuTitleCoordinates[0])
   levelsMenuControlForward = pygame.image.load("assets/sprites/levelsPageControlForward.png")
   levelsMenuControlForward = pygame.transform.smoothscale(levelsMenuControlForward, (levelsMenuControlForward.get_size()[0] // 2, levelsMenuControlForward.get_size()[1] // 2))
   levelsMenuControlBackward = pygame.image.load("assets/sprites/levelsPageControlBackwards.png")
   levelsMenuControlBackward = pygame.transform.smoothscale(levelsMenuControlBackward, (levelsMenuControlBackward.get_size()[0] // 2, levelsMenuControlBackward.get_size()[1] // 2))
   levelsMenuButtonsCoordinates = [(200, 430), (280, 430)]
+  levelsMenuSurface.blit(levelsMenuBG, (0, 0))
+  
   # Options
   optionsMenuBG = pygame.image.load("assets/sprites/optionsMenuBG.png")
   optionsMenuBG = pygame.transform.smoothscale(optionsMenuBG, (WIDTH, HEIGHT))
+  optionsMenuButtonsCoordinates = [(193 + widthDiff, 203), (285 + widthDiff, 281), (285 + widthDiff, 359), (90 + widthDiff, 436)]
+  optionsSurface.fill(colors["BG"])
+  optionsSurface.blit(optionsMenuBG, (0, 0))
+  optionsSurface.blit(mainMenuButtons[3], (optionsMenuButtonsCoordinates[3]))
+  optionsMenuTextCoordinates = []
+  for i in range(3):
+    if lang == "eng": text = "Options" if i == 0 else "Music" if i == 1 else "Sound"
+    if lang == "ua": text = "Налаштування" if i == 0 else "Музика" if i == 1 else "Звук"
+    text = pressStartFontPrimary.render(text, True, colors["Black"]) if i == 0 else pressStartFontSecondary.render(text, True, colors["Black"])
+    coords = (WIDTH/2 - text.get_width()/2, 110) if i == 0 else (110, 292) if i == 1 else (110, 370)
+    optionsSurface.blit(text, coords)
+    optionsMenuTextCoordinates.append(coords)
   optionsSlider = pygame.Surface((190, 57)).convert_alpha()
   pygame.draw.rect(optionsSlider, colors["Black"], (0, 0, optionsSlider.get_width(), optionsSlider.get_height()), 0, 14)
   optionsSliderSliding = pygame.Surface((74, 37)).convert_alpha()
   pygame.draw.rect(optionsSliderSliding, colors["White"], (0, 0, optionsSliderSliding.get_width(), optionsSliderSliding.get_height()), 0, 8)
-  optionsMenuButtonsCoordinates = [(193 + widthDiff, 203), (285 + widthDiff, 281), (285 + widthDiff, 359), (90 + widthDiff, 436)]
+
   # Paused
-  pausedButtonContinue = pygame.image.load("assets/sprites/pauseButtonContinue.png").convert_alpha()
-  pausedButtonMenu = pygame.image.load("assets/sprites/pauseButtonMenu.png").convert_alpha()
-  pausedButtonRestart = pygame.image.load("assets/sprites/pauseButtonRestart.png").convert_alpha()
-  pausedButtonsCoordinates = [(86 + widthDiff, 187), (86 + widthDiff, 287), (86 + widthDiff, 387)]
-  levelPassedButtonNextLevel = pygame.image.load("assets/sprites/levelPassedButtonNextLevel.png").convert_alpha()
-  levelPassedButtonMainMenu = pygame.image.load("assets/sprites/levelPassedButtonMainMenu.png").convert_alpha()
-  levelPassedButtonRestart = pygame.image.load("assets/sprites/levelPassedButtonRestart.png").convert_alpha()
-  levelPassedButtonCredits = pygame.image.load("assets/sprites/levelPassedButtonCredits.png").convert_alpha()
-  levelPassedButtonsCoordinates = [(86 + widthDiff, 212), (86 + widthDiff, 312), (86 + widthDiff, 412)]
-
-  mainMenuSurface.fill(colors["BG"])
-  mainMenuSurface.blit(mainMenuBG, (0, 0))
-  buttonsX = WIDTH/2 - mainMenuLevelsButton.get_size()[0]/2
-  buttonsY = 270
-  if tutorial:
-    mainMenuSurface.blit(mainMenuTutorialButton, mainMenuButtonsCoordinates[0])
-    mainMenuSurface.blit(mainMenuLevelsButton, mainMenuButtonsCoordinates[1])
-    mainMenuSurface.blit(mainMenuCreditsButton, mainMenuButtonsCoordinates[2])
-  else:
-    mainMenuSurface.blit(mainMenuLevelsButton, mainMenuButtonsCoordinates[0])
-    mainMenuSurface.blit(mainMenuCreditsButton, mainMenuButtonsCoordinates[1])
-    mainMenuSurface.blit(mainMenuOptionsButton, mainMenuButtonsCoordinates[2])
-  creditsSurface.fill(colors["BG"])
-  creditsSurface.blit(creditsBG, (0, 0))
-  optionsSurface.blit(optionsMenuBG, (0, 0))
-  optionsSurface.blit(mainMenuTutorialButton, (optionsMenuButtonsCoordinates[3]))
-  levelsMenuSurface.blit(levelsMenuBG, (0, 0))
-
   pygame.draw.rect(pausedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 127), (0, 0, WIDTH, HEIGHT))
   pygame.draw.rect(pausedSurface, (198, 198, 198, 229), (47 + widthDiff, 152, 462, 341), 0, 15)
   pygame.draw.rect(pausedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (47 + widthDiff, 152, 462, 341), 5, 15)
-  pausedSurface.blit(pausedButtonContinue, pausedButtonsCoordinates[0])
-  pausedSurface.blit(pausedButtonMenu, pausedButtonsCoordinates[1])
-  pausedSurface.blit(pausedButtonRestart, pausedButtonsCoordinates[2])
+  pausedButtons = []
+  pausedButtonsCoordinates = [(86 + widthDiff, 187), (86 + widthDiff, 287), (86 + widthDiff, 387)]
+  for i in range(3):
+    button = pygame.Surface((380, 75)).convert_alpha()
+    pygame.draw.rect(button, colors["Accent"], (0, 0, button.get_size()[0], button.get_size()[1]), 0, 14)
+    if lang == "eng": text = "Continue" if i == 0 else "Main menu" if i == 1 else "Restart"
+    elif lang == "ua": text = "Продовжити" if i == 0 else "Головне меню" if i == 1 else "Почати заново"
+    buttonText = pressStartFontSecondary.render(text, True, colors["White"], None)
+    button.blit(buttonText, (button.get_width()/2 - buttonText.get_width()/2, button.get_height()/2 - buttonText.get_height()/2))
+    pausedSurface.blit(button, pausedButtonsCoordinates[i])
+    pausedButtons.append(button)
+  
+  # Level passed
+  levelPassedButtonsCoordinates = [(86 + widthDiff, 212), (86 + widthDiff, 312), (86 + widthDiff, 412)]
+  levelPassedButtons = []
+  for i in range(4):
+    button = pygame.Surface((380, 75)).convert_alpha()
+    pygame.draw.rect(button, colors["Accent"], (0, 0, button.get_size()[0], button.get_size()[1]), 0, 14)
+    if lang == "eng": text = "Next level" if i == 0 else "Main menu" if i == 1 else "Restart" if i == 2 else "Credits"
+    elif lang == "ua": text = "Наступний" if i == 0 else "Головне меню" if i == 1 else "Почати заново" if i == 2 else "Титри"
+    buttonText = pressStartFontSecondary.render(text, True, colors["White"], None)
+    button.blit(buttonText, (button.get_width()/2 - buttonText.get_width()/2, button.get_height()/2 - buttonText.get_height()/2))
+    levelPassedButtons.append(button)
+    pygame.draw.rect(levelPassedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 127), (0, 0, WIDTH, HEIGHT))
 
-  pygame.draw.rect(levelPassedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 127), (0, 0, WIDTH, HEIGHT))
   pygame.draw.rect(levelPassedSurface, (198, 198, 198, 229), (23 + widthDiff, 95, 510, 421), 0, 15)
   pygame.draw.rect(levelPassedSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (23 + widthDiff, 95, 510, 421), 5, 15)
-  levelPassedText = menuFont.render("Congratulations!", True, colors["Accent"])
+  
+  levelPassedText = menuFont.render("Congratulations!" if lang == "eng" else "Чудово!", True, colors["Accent"])
   levelPassedTextCoords = (WIDTH//2-levelPassedText.get_size()[0]//2, 120)
   levelPassedSurface.blit(levelPassedText, (levelPassedTextCoords[0], levelPassedTextCoords[1]))
-  levelPassedText = menuFont.render("Level passed", True, colors["Accent"])
+  levelPassedText = menuFont.render("Level passed" if lang == "eng" else "Рівень пройдено", True, colors["Accent"])
   levelPassedTextCoords = (WIDTH//2-levelPassedText.get_size()[0]//2, 120)
   levelPassedSurface.blit(levelPassedText, (levelPassedTextCoords[0], levelPassedTextCoords[1] + levelPassedText.get_size()[1] + 15))
 
   tutorialMessageSurface = pygame.Surface((290, 150)).convert_alpha()
-  pygame.draw.rect(tutorialMessageSurface, (198, 198, 198, 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 0, 15)
-  pygame.draw.rect(tutorialMessageSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 5, 15)
-  skipText = tutorialFontSecondary.render("Press enter to continue", True, colors["Accent"])
-  tutorialMessageSurface.blit(skipText, (tutorialMessageSurface.get_size()[0]//2 - skipText.get_size()[0]//2, tutorialMessageSurface.get_size()[1] - skipText.get_size()[1] - 15))
-
   tutorialOverlays = []
   for i in range(18):
     tutorialOverlays.append("")
@@ -384,6 +403,7 @@ def updateParams():
   pygame.draw.rect(cursorImage, colors["Accent"], (0, 0, cursorWidth[currentCursorWidth], cursorImage.get_size()[1]//2))
   pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0]//2, cursorImage.get_size()[1] - cursorWidth[currentCursorWidth], cursorImage.get_size()[0], cursorImage.get_size()[1]))
   pygame.draw.rect(cursorImage, colors["Accent"], (cursorImage.get_size()[0] - cursorWidth[currentCursorWidth], cursorImage.get_size()[1]//2, cursorImage.get_size()[0], cursorImage.get_size()[1]))
+  cursor.image = pygame.transform.smoothscale(cursorImage, (cursor.step, cursor.step))
 
   currentTutorialMessage = 0
 
@@ -455,27 +475,26 @@ def updateScreen():
       mousePos = event.pos
       if menu and not _credits and not levelsMenu and not paused and not options:
         if tutorial:
-          if mainMenuTutorialButton.get_rect(topleft=mainMenuButtonsCoordinates[0]).collidepoint(mousePos):
+          if mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[0]).collidepoint(mousePos):
             currentLevel = 0
             updateParams()
             drawGrid()
             blocksCrossesSufrace.fill((0, 0, 0, 0))
             menu = False
             levelsMenu = False
-          elif mainMenuLevelsButton.get_rect(topleft=mainMenuButtonsCoordinates[1]).collidepoint(mousePos):
+          elif mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[1]).collidepoint(mousePos):
             levelsMenu = True
             page = 0
-          elif mainMenuCreditsButton.get_rect(topleft=mainMenuButtonsCoordinates[2]).collidepoint(mousePos):
+          elif mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[2]).collidepoint(mousePos):
             _credits = True
         else:
-          if mainMenuLevelsButton.get_rect(topleft=mainMenuButtonsCoordinates[0]).collidepoint(mousePos):
+          if mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[0]).collidepoint(mousePos):
             levelsMenu = True
             page = 0
-          elif mainMenuCreditsButton.get_rect(topleft=mainMenuButtonsCoordinates[1]).collidepoint(mousePos):
+          elif mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[1]).collidepoint(mousePos):
             _credits = True
-          elif mainMenuOptionsButton.get_rect(topleft=mainMenuButtonsCoordinates[2]).collidepoint(mousePos):
-            options = True
-            
+          elif mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[2]).collidepoint(mousePos):
+            options = True       
       elif levelsMenu:
         for button in levelButtons[page]:
           buttonRect = pygame.Rect(button[2][0], button[2][1], 75, 75)
@@ -491,38 +510,38 @@ def updateScreen():
         elif levelsMenuControlBackward.get_rect(topleft=levelsMenuButtonsCoordinates[0]).collidepoint(mousePos):
           page -= 1
       elif paused:
-        if pausedButtonContinue.get_rect(topleft=pausedButtonsCoordinates[0]).collidepoint(mousePos):
+        if pausedButtons[0].get_rect(topleft=pausedButtonsCoordinates[0]).collidepoint(mousePos):
           paused = False
-        elif pausedButtonMenu.get_rect(topleft=pausedButtonsCoordinates[1]).collidepoint(mousePos):
+        elif pausedButtons[0].get_rect(topleft=pausedButtonsCoordinates[1]).collidepoint(mousePos):
           paused = False
           menu = True
           if optionsTutorial and tutorial:
             tutorial = False
-        elif pausedButtonRestart.get_rect(topleft=pausedButtonsCoordinates[2]).collidepoint(mousePos):
+        elif pausedButtons[0].get_rect(topleft=pausedButtonsCoordinates[2]).collidepoint(mousePos):
           paused = False
           updateParams()
           drawGrid()
           blocksCrossesSufrace.fill((0, 0, 0, 0))
       elif levelPassed:
         if len(patterns) - 1 != currentLevel:
-          if levelPassedButtonNextLevel.get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mousePos):
+          if levelPassedButtons[0].get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mousePos):
             currentLevel += 1
             updateParams()
             drawGrid()
             blocksCrossesSufrace.fill((0, 0, 0, 0))
             levelPassed = False
-          elif levelPassedButtonMainMenu.get_rect(topleft=levelPassedButtonsCoordinates[1]).collidepoint(mousePos):
+          elif levelPassedButtons[0].get_rect(topleft=levelPassedButtonsCoordinates[1]).collidepoint(mousePos):
             levelPassed = False
             menu = True
         else:
-          if levelPassedButtonMainMenu.get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mousePos):
+          if levelPassedButtons[0].get_rect(topleft=levelPassedButtonsCoordinates[0]).collidepoint(mousePos):
             levelPassed = False
             menu = True
           elif levelPassedButtonCredits.get_rect(topleft=levelPassedButtonsCoordinates[1]).collidepoint(mousePos):
             levelPassed = False
             menu = True
             _credits = True
-        if levelPassedButtonRestart.get_rect(topleft=levelPassedButtonsCoordinates[2]).collidepoint(mousePos):
+        if levelPassedButtons[0].get_rect(topleft=levelPassedButtonsCoordinates[2]).collidepoint(mousePos):
           updateParams()
           drawGrid()
           blocksCrossesSufrace.fill((0, 0, 0, 0))
@@ -530,11 +549,12 @@ def updateScreen():
       elif options:
         if optionsSlider.get_rect(topleft=optionsMenuButtonsCoordinates[0]).collidepoint(mousePos):
           lang = "eng" if lang == "ua" else "ua"
+          prepareAssets()
         elif optionsSlider.get_rect(topleft=optionsMenuButtonsCoordinates[1]).collidepoint(mousePos):
           sound = False if sound else True
         elif optionsSlider.get_rect(topleft=optionsMenuButtonsCoordinates[2]).collidepoint(mousePos):
           music = False if music else True
-        elif mainMenuTutorialButton.get_rect(topleft=optionsMenuButtonsCoordinates[3]).collidepoint(mousePos):
+        elif mainMenuButtons[3].get_rect(topleft=optionsMenuButtonsCoordinates[3]).collidepoint(mousePos):
           tutorial = True
           optionsTutorial = True
           currentLevel = 0
@@ -543,21 +563,23 @@ def updateScreen():
           blocksCrossesSufrace.fill((0, 0, 0, 0))
           menu = False
           options = False
-  
+
     elif pygame.key.get_pressed()[pygame.K_ESCAPE]:
       if levelsMenu:
         levelsMenu = False
         page = 0
       elif not menu and not paused:
         paused = True
+      elif options:
+        options = False
 
   screen.fill(colors["BG"])
 
   if not menu:
     textSurface.fill((255, 255, 255, 0))
-    playerScore = scoreFont.render("Score: " + str(cursor.playerScore), True, colors["Accent"])
+    playerScore = scoreFont.render(("Score: " if lang == "eng" else "Рахунок ") + str(cursor.playerScore), True, colors["Accent"])
     textSurface.blit(playerScore, (WIDTH - playerScore.get_size()[0] - 20, 20))
-    level = scoreFont.render("Level " + str(currentLevel+1), True, colors["Accent"])
+    level = scoreFont.render(("Level " if lang == "eng" else "Рівень ") + str(currentLevel+1), True, colors["Accent"])
     textSurface.blit(level, (20, 20))
 
     screen.blit(blocksCrossesSufrace, (0, 0))
@@ -575,9 +597,9 @@ def updateScreen():
       pygame.draw.rect(tutorialMessageSurface, (198, 198, 198, 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 0, 15)
       pygame.draw.rect(tutorialMessageSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 5, 15)
       if currentTutorialMessage not in unskippableMessages:
-        skipText = tutorialFontSecondary.render("Press enter to continue", True, colors["Accent"])
+        skipText = pressStartFontTutorial.render("Press enter to continue", True, colors["Accent"])
       else:
-        skipText = tutorialFontSecondary.render("Complete the task to continue", True, colors["Accent"])
+        skipText = pressStartFontTutorial.render("Complete the task to continue", True, colors["Accent"])
       tutorialMessageSurface.blit(skipText, (tutorialMessageSurface.get_size()[0]//2 - skipText.get_size()[0]//2, tutorialMessageSurface.get_size()[1] - skipText.get_size()[1] - 15))
       if currentTutorialMessage == 1:
         tutorialSurface.blit(tutorialOverlays[0], (0, 0))
@@ -660,15 +682,16 @@ def updateScreen():
       elif currentTutorialMessage == 24 and filledPattern[4][2] != 2:
         tutorial = False
       tutorialText = [""]
-      currentTutorialMessageText = tutorialMessages[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tips[0]
+      if lang == "eng": currentTutorialMessageText = tutorialMessages[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tips[0]
+      elif lang == "ua": currentTutorialMessageText = tutorialMessagesUa[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tips[0]
       for word in currentTutorialMessageText.split(" "):
-        if tutorialFontMain.render(tutorialText[-1], True, colors["Accent"]).get_width() + 40 >= tutorialMessageSurface.get_width() - 40:
+        if tutorialFont.render(tutorialText[-1], True, colors["Accent"]).get_width() + 40 >= tutorialMessageSurface.get_width() - 40:
           tutorialText[-1] = tutorialText[-1][:-1]
           tutorialText.append("")
         tutorialText[-1] += word + " "
       textY = 15
       for line in tutorialText:
-        messageLine = tutorialFontMain.render(line, True, colors["Accent"])
+        messageLine = tutorialFont.render(line, True, colors["Accent"])
         tutorialMessageSurface.blit(messageLine, (tutorialMessageSurface.get_width()//2 - messageLine.get_width()//2, textY))
         textY += messageLine.get_height() + 3
       tutorialSurface.blit(tutorialMessageSurface, (tutorialMessageSurfaceX, tutorialMessageSurfaceY))
@@ -683,13 +706,13 @@ def updateScreen():
       elif time.time() - firstFilledPatternTime >= 1:
         levelPassed = True
         if len(patterns) - 1 != currentLevel:
-          levelPassedSurface.blit(levelPassedButtonNextLevel, levelPassedButtonsCoordinates[0])
-          levelPassedSurface.blit(levelPassedButtonMainMenu, levelPassedButtonsCoordinates[1])
-          levelPassedSurface.blit(levelPassedButtonRestart, levelPassedButtonsCoordinates[2])
+          levelPassedSurface.blit(levelPassedButtons[0], levelPassedButtonsCoordinates[0])
+          levelPassedSurface.blit(levelPassedButtons[1], levelPassedButtonsCoordinates[1])
+          levelPassedSurface.blit(levelPassedButtons[2], levelPassedButtonsCoordinates[2])
         else:
-          levelPassedSurface.blit(levelPassedButtonMainMenu, levelPassedButtonsCoordinates[0])
-          levelPassedSurface.blit(levelPassedButtonCredits, levelPassedButtonsCoordinates[1])
-          levelPassedSurface.blit(levelPassedButtonRestart, levelPassedButtonsCoordinates[2])
+          levelPassedSurface.blit(levelPassedButtons[1], levelPassedButtonsCoordinates[0])
+          levelPassedSurface.blit(levelPassedButtons[3], levelPassedButtonsCoordinates[1])
+          levelPassedSurface.blit(levelPassedButtons[2], levelPassedButtonsCoordinates[2])
 
         screen.blit(levelPassedSurface, (0, 0))
     else:
@@ -716,16 +739,17 @@ def updateScreen():
     elif levelsMenu:
       levelsMenuSurface.fill(colors["BG"])
       levelsMenuSurface.blit(levelsMenuBG, (0, 0))
+      levelsMenuSurface.blit(levelsMenuTitle, levelsMenuTitleCoordinates[0])
       for surface in range(len(levelButtons[page])):
         instance = levelButtons[page][surface][1] - (levelButtons[page][surface][1] // 10 * 10)
         if len(levelButtons[page][surface]) == 2: levelButtons[page][surface].append([]) 
         levelButtons[page][surface][2] = (42 + 100 * instance, 240) if instance <= 4 else (42 + 100 * (instance - 5), 340)
-        levelsMenuSurface.blit(levelButtons[page][surface][0], levelButtons[page][surface][2])
+        levelsMenuSurface.blit(levelButtons[page][surface][0], (levelButtons[page][surface][2][0] + widthDiff, levelButtons[page][surface][2][1]))
 
       if len(levelButtons) - 1 > page:
-        levelsMenuSurface.blit(levelsMenuControlForward, levelsMenuButtonsCoordinates[1])
+        levelsMenuSurface.blit(levelsMenuControlForward, (levelsMenuButtonsCoordinates[1][0] + widthDiff, levelsMenuButtonsCoordinates[1][1]))
       if page > 0:
-        levelsMenuSurface.blit(levelsMenuControlBackward, levelsMenuButtonsCoordinates[0])
+        levelsMenuSurface.blit(levelsMenuControlBackward, (levelsMenuButtonsCoordinates[0][0] + widthDiff, levelsMenuButtonsCoordinates[0][1]))
 
       screen.blit(levelsMenuSurface, (0, 0))
     elif options:
@@ -755,7 +779,7 @@ def updateScreen():
 
 def main():
   global patterns, totalLevels
-  loadImages()
+  prepareAssets()
   patterns = loadPatterns()
   generateLevelsMenu()
   totalLevels = len(patterns)
