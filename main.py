@@ -165,6 +165,32 @@ tips = [
 tutorialMessagesUa = [
   "Вітання! В цьому туторіалі ви навчитесь грати. Для руху можна використовувати стрілки або клавіші WASD. Курсор рухається вгору, вниз, вправо та вліво.",
   "Числа над полем та справа від нього вказують які частини поля повинні бути заповнені, а які ні.",
+  "Наприклад, це число 5 означає що всі 5 частин чього ряду мають бути заповненими, адже розмір рівня - 5х5.",
+  "Щоб заповнити квадрат натисніть пробіл. Якщо ви бачите, що квадрат заповнювати не потрібно - поставте хрестик натиснувши на C.",
+  "Тепер рухайте курсор та натискайте пробіл щоб заповнити виділену ділянку поля!",
+  "Чудово! Візьмемо ці одиниці. Якщо числа не додано - вони мають іти окремо.",
+  "Тобто один квадрат має бути заповнено, як мінімум один пропущено, один заповнено, як мінімум один пропущено, і так далі...",
+  "В нашому випадку, на полі це виглядатиму якось так. Перший, третій і пʼятий квадрати будуть заповнені. Тепер твоя черга. Заповни їх!",
+  "Чудова робота! Тепер заповни два квадрати, що залишились, хрестиками натиснувши C.",
+  "Правильно! Це особливо тобі допоможе коли ти будеш розвʼязувати більші і складніші рівні.",
+  "Зверни увагу на цю колонку. Числа 2 та 1 трохи складніше розвʼязати. Двійка перед одиницею означає що прямокутник 2х1 має йти першим - вище.",
+  "Для початку, цей квадрат вже заповнено і це означає що він є частиною прямокутника 2х1, адже лише так ми можемо заповнити цю колонку.",
+  "Це означає що перший квадрат цієї колонки буде пустим в будь-якому випадку. Постав туди хрестик!",
+  "Тепер в нас залишились ці чотири квадрати. Нагадаю, прямокутники 2х1 та 1х1 мають йти окремо.",
+  "Якщо ми припустимо що цей квадрат заповнено як другу частину прямокутника 2х1, то ми не зможемо вмістити ще один прямокутник, адже нам потрібно залишити місце між ними.",
+  "В цьому випадку, залишається лише один варіант для нашого прямокутника 2х1 - заповнити цей квадрат. Заповни його!",
+  "Тепер враховуючи те, що нам потрібно залишити місце між прямокутниками, залишається лише один варіант для прямокутника 1х1.",
+  "Заповни цей квадрат, а також постав хрестик між прямокутниками, в місці пропуску між ними.",
+  "Чудово! Ще одна колонка заповнена, а отже ми ближче до перемоги. Спробуй використати свої знання і заповнити ці дві колонки.",
+  "Ти так швидко вчишся! На полі залишилась лише одна незаповнена колонка - середня. Ти легко з нею вправишся.",
+  "Звертай увагу на усі цифри. Наприклад, ці одиниці вказують на те, що в цьому рядку заповнено має бути лише два квадрати.",
+  "Між ними має бути пропуск. Так як в нас вже є два прямокутника 1х1 в цьому рядку, залишається лише один варіант для цього квадрата. Постав туди хрестик.",
+  "Тепер розглянемо ці одиниці. Не лише одиниці справа, а й одиниця вгорі разом вказують нам що цей квадрат безумовно має бути заповнено. Заповни його.",
+  "На цьому етапі рівень майже пройдено! Розглянемо цю одиницю. В усіх квадратах цього ряду хрестики, а отже квадрат що залишився треба заповнити. Зроби це.",
+  "Поглянь на ці двійки. В нас вже є два 2х1 прямокутника. Заверш цей рівень поставивши в єдиний квадрат, що залишився хрестик."
+]
+tipsUa = [
+  "Якщо ти переплутав і поставив хрестик на місце прямокутника або навпаки - місце заповниться правильним обʼєктом, проте рахунок не збільшиться."
 ]
 unskippableMessages = [4, 7, 8, 12, 15, 17, 18, 21, 22, 23, 24]
 currentTutorialMessage = 0
@@ -226,8 +252,8 @@ def prepareAssets():
   for i in range(4):
     mainMenuButton = pygame.Surface((380, 75)).convert_alpha()
     pygame.draw.rect(mainMenuButton, colors["Black"], (0, 0, mainMenuButton.get_size()[0], mainMenuButton.get_size()[1]), 0, 14)
-    if lang == "eng": text = "Levels" if i == 0 else "Credits" if i == 1 else "Options" if i == 2 else "Tutorial"
-    elif lang == "ua": text = "Рівні" if i == 0 else "Титри" if i == 1 else "Налаштування" if i == 2 else "Туторіал"
+    if lang == "eng": text = "Levels" if i == 0 else "Options" if i == 1 else "Credits" if i == 2 else "Tutorial"
+    elif lang == "ua": text = "Рівні" if i == 0 else "Налаштування" if i == 1 else "Титри" if i == 2 else "Туторіал"
     buttonText = pressStartFontSecondary.render(text, True, colors["White"], None)
     mainMenuButton.blit(buttonText, (mainMenuButton.get_width()/2 - buttonText.get_width()/2, mainMenuButton.get_height()/2 - buttonText.get_height()/2))
     mainMenuButtons.append(mainMenuButton)
@@ -597,9 +623,9 @@ def updateScreen():
       pygame.draw.rect(tutorialMessageSurface, (198, 198, 198, 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 0, 15)
       pygame.draw.rect(tutorialMessageSurface, (colors["Accent"][0], colors["Accent"][1], colors["Accent"][2], 229), (0, 0, tutorialMessageSurface.get_size()[0], tutorialMessageSurface.get_size()[1]), 5, 15)
       if currentTutorialMessage not in unskippableMessages:
-        skipText = pressStartFontTutorial.render("Press enter to continue", True, colors["Accent"])
+        skipText = pressStartFontTutorial.render("Press enter to continue" if lang == "eng" else "Натисни enter щоб продовжити", True, colors["Accent"])
       else:
-        skipText = pressStartFontTutorial.render("Complete the task to continue", True, colors["Accent"])
+        skipText = pressStartFontTutorial.render("Complete the task to continue" if lang == "eng" else "Виконай завдання щоб продовжити", True, colors["Accent"])
       tutorialMessageSurface.blit(skipText, (tutorialMessageSurface.get_size()[0]//2 - skipText.get_size()[0]//2, tutorialMessageSurface.get_size()[1] - skipText.get_size()[1] - 15))
       if currentTutorialMessage == 1:
         tutorialSurface.blit(tutorialOverlays[0], (0, 0))
@@ -683,7 +709,7 @@ def updateScreen():
         tutorial = False
       tutorialText = [""]
       if lang == "eng": currentTutorialMessageText = tutorialMessages[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tips[0]
-      elif lang == "ua": currentTutorialMessageText = tutorialMessagesUa[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tips[0]
+      elif lang == "ua": currentTutorialMessageText = tutorialMessagesUa[currentTutorialMessage] if not firstMistake or firstMistakeSeen else tipsUa[0]
       for word in currentTutorialMessageText.split(" "):
         if tutorialFont.render(tutorialText[-1], True, colors["Accent"]).get_width() + 40 >= tutorialMessageSurface.get_width() - 40:
           tutorialText[-1] = tutorialText[-1][:-1]
