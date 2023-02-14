@@ -76,7 +76,6 @@ class cursorSprite(pygame.sprite.Sprite):
         blocksCrossesSufrace.blit(crossSprite, (self.rect.x, self.rect.y))
         if tutorial and not firstMistake:
           firstMistake = True
-          print(firstMistake, 2)
     elif keys[pygame.K_c]:
       if patterns[currentLevel][self.cursorY][self.cursorX] == 1 and filledPattern[self.cursorY][self.cursorX] == 2:
         filledPattern[self.cursorY][self.cursorX] = 1
@@ -251,6 +250,7 @@ def prepareAssets():
   mainMenuButtons = []
   for i in range(4):
     mainMenuButton = pygame.Surface((380, 75)).convert_alpha()
+    mainMenuButton.fill((0, 0, 0, 0))
     pygame.draw.rect(mainMenuButton, colors["Black"], (0, 0, mainMenuButton.get_size()[0], mainMenuButton.get_size()[1]), 0, 14)
     if lang == "eng": text = "Levels" if i == 0 else "Options" if i == 1 else "Credits" if i == 2 else "Tutorial"
     elif lang == "ua": text = "Рівні" if i == 0 else "Налаштування" if i == 1 else "Титри" if i == 2 else "Туторіал"
@@ -298,8 +298,10 @@ def prepareAssets():
     optionsSurface.blit(text, coords)
     optionsMenuTextCoordinates.append(coords)
   optionsSlider = pygame.Surface((190, 57)).convert_alpha()
+  optionsSlider.fill((0, 0, 0, 0))
   pygame.draw.rect(optionsSlider, colors["Black"], (0, 0, optionsSlider.get_width(), optionsSlider.get_height()), 0, 14)
   optionsSliderSliding = pygame.Surface((74, 37)).convert_alpha()
+  optionsSliderSliding.fill((0, 0, 0, 0))
   pygame.draw.rect(optionsSliderSliding, colors["White"], (0, 0, optionsSliderSliding.get_width(), optionsSliderSliding.get_height()), 0, 8)
 
   # Paused
@@ -310,6 +312,7 @@ def prepareAssets():
   pausedButtonsCoordinates = [(86 + widthDiff, 187), (86 + widthDiff, 287), (86 + widthDiff, 387)]
   for i in range(3):
     button = pygame.Surface((380, 75)).convert_alpha()
+    button.fill((0, 0, 0, 0))
     pygame.draw.rect(button, colors["Accent"], (0, 0, button.get_size()[0], button.get_size()[1]), 0, 14)
     if lang == "eng": text = "Continue" if i == 0 else "Main menu" if i == 1 else "Restart"
     elif lang == "ua": text = "Продовжити" if i == 0 else "Головне меню" if i == 1 else "Почати заново"
@@ -323,6 +326,7 @@ def prepareAssets():
   levelPassedButtons = []
   for i in range(4):
     button = pygame.Surface((380, 75)).convert_alpha()
+    button.fill((0, 0, 0, 0))
     pygame.draw.rect(button, colors["Accent"], (0, 0, button.get_size()[0], button.get_size()[1]), 0, 14)
     if lang == "eng": text = "Next level" if i == 0 else "Main menu" if i == 1 else "Restart" if i == 2 else "Credits"
     elif lang == "ua": text = "Наступний" if i == 0 else "Головне меню" if i == 1 else "Почати заново" if i == 2 else "Титри"
@@ -439,6 +443,10 @@ def drawGrid():
   for x in range(currentLevelSize):
     for y in range(currentLevelSize):
       pygame.draw.rect(levelSurface, colors["Accent"], (x*cursor.step, y*cursor.step+150+gap, cursor.step, cursor.step), 1)
+  if currentLevelSize % 5 == 0:
+    for x in range(currentLevelSize // 5):
+      for y in range(currentLevelSize // 5):
+        pygame.draw.rect(levelSurface, colors["Accent"], (x*cursor.step*5, y*cursor.step*5+150+gap, cursor.step*5, cursor.step*5), 2)
   drawNumbers()
 
 def drawNumbers():
@@ -512,7 +520,7 @@ def updateScreen():
             levelsMenu = True
             page = 0
           elif mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[2]).collidepoint(mousePos):
-            _credits = True
+            options = True
         else:
           if mainMenuButtons[0].get_rect(topleft=mainMenuButtonsCoordinates[0]).collidepoint(mousePos):
             levelsMenu = True
@@ -727,6 +735,9 @@ def updateScreen():
       screen.blit(pausedSurface, (0, 0))
     
     if sum(1 for row in filledPattern for item in row if item == 2) == 0:
+      if tutorial: 
+        tutorial = False
+        prepareAssets()
       if firstFilledPatternTime == 0:
         firstFilledPatternTime = time.time()
       elif time.time() - firstFilledPatternTime >= 1:
@@ -820,6 +831,7 @@ main()
 os.system("clear")
 
 with open(".stats.json", "w") as f:
+  statsData["tutorialPassed"] = not tutorial
   statsData["lang"] = lang
   statsData["sound"] = sound
   statsData["music"] = music
